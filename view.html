@@ -6,10 +6,13 @@
 <title>All Submissions</title>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; color: #333; background-color: #f9f9f9; }
-  h1 { text-align: center; color: #111; margin-bottom: 2rem; }
+  .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+  h1 { color: #111; margin: 0; }
+  button.logout { padding: 0.6rem 1.2rem; background: #e0e0e0; color: #333; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
+  button.logout:hover { background: #d0d0d0; }
   #list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1.5rem; }
   .card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-  .header { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+  .card-header { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
   .name { font-weight: bold; font-size: 1.1rem; color: #111; }
   .email { color: #555; }
   .date { display: block; font-size: 0.85rem; color: #888; margin-bottom: 1rem; }
@@ -19,14 +22,28 @@
 </style>
 </head>
 <body>
-  <h1>All submissions</h1>
+  <div class="header-bar">
+    <h1>All submissions</h1>
+    <button id="logoutBtn" class="logout">Log out</button>
+  </div>
   <div id="statusMsg" class="status">Loading submissions...</div>
   <ul id="list"></ul>
 
   <script>
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.replace("login.html");
+    }
+
     const list = document.getElementById('list');
     const statusMsg = document.getElementById('statusMsg');
+    const logoutBtn = document.getElementById('logoutBtn');
     const URL = 'https://script.google.com/macros/s/AKfycbxPldAv0ONw_RdJP6XZdjq83DCLY8XQubxL_pda0h5ShUG3PukxEhLaUPBa7cbYLYFV/exec';
+
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem("token");
+      window.location.replace("login.html");
+    });
 
     function escapeHTML(str) {
       if (!str) return '';
@@ -36,13 +53,22 @@
     }
 
     async function loadSubmissions() {
+      if (!token) return;
+
       try {
-        const res = await fetch(URL);
+        const params = new URLSearchParams({ action: "getContacts", token });
+        const res = await fetch(URL + "?" + params.toString());
         const data = await res.json();
         
+        if (!data.ok) {
+          localStorage.removeItem("token");
+          window.location.replace("login.html");
+          return;
+        }
+
         statusMsg.style.display = 'none';
 
-        if (data && data.contacts && data.contacts.length > 0) {
+        if (data.contacts && data.contacts.length > 0) {
           data.contacts.forEach(contact => {
             const li = document.createElement('li');
             li.className = 'card';
@@ -53,7 +79,7 @@
             const msgText = escapeHTML(contact.message);
 
             li.innerHTML = `
-              <div class="header">
+              <div class="card-header">
                 <span class="name">${name}</span>
                 <span class="email">(${email})</span>
               </div>

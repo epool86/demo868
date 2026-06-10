@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 400px; margin: 4rem auto; padding: 0 1rem; color: #333; background-color: #f9f9f9; }
+  h1 { text-align: center; color: #111; margin-bottom: 2rem; }
+  form { display: flex; flex-direction: column; gap: 1rem; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+  input { width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
+  input:focus { border-color: #0066cc; outline: none; }
+  button { padding: 1rem; background: #0066cc; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; }
+  button:hover { background: #0052a3; }
+  #msg { text-align: center; color: #d32f2f; font-weight: 600; margin-top: 1rem; min-height: 1.5rem; }
+</style>
+</head>
+<body>
+  <h1>Sign in</h1>
+  <form id="loginForm">
+    <input type="text" id="username" name="username" placeholder="Username" required>
+    <input type="password" id="password" name="password" placeholder="Password" required>
+    <button type="submit">Sign in</button>
+  </form>
+  <p id="msg"></p>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const msg = document.getElementById('msg');
+    const URL = 'https://script.google.com/macros/s/AKfycbxPldAv0ONw_RdJP6XZdjq83DCLY8XQubxL_pda0h5ShUG3PukxEhLaUPBa7cbYLYFV/exec';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = "Signing in...";
+      msg.style.color = "#333";
+      
+      const params = new URLSearchParams({
+        action: "login",
+        username: form.username.value,
+        password: form.password.value
+      });
+
+      try {
+        const res = await fetch(URL + "?" + params.toString());
+        const data = await res.json();
+        
+        if (data.ok) {
+          localStorage.setItem("token", data.token);
+          window.location.href = "view.html";
+        } else {
+          msg.textContent = data.error || "Wrong credentials";
+          msg.style.color = "#d32f2f";
+        }
+      } catch (err) {
+        msg.textContent = "Error signing in. Try again later.";
+        msg.style.color = "#d32f2f";
+      }
+    });
+  </script>
+</body>
+</html>
